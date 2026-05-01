@@ -6,7 +6,12 @@ import type { GeminiKeyConfig, OpenAIProviderConfig, ProviderKeyConfig } from '@
 import type { AuthFileItem } from '@/types/authFile';
 import type { CredentialInfo } from '@/types/sourceInfo';
 import { buildSourceInfoMap, resolveSourceDisplay } from '@/utils/sourceResolver';
-import { collectUsageDetails, formatCompactNumber, normalizeAuthIndex } from '@/utils/usage';
+import {
+  collectUsageApiDisplayMetadata,
+  collectUsageDetails,
+  formatCompactNumber,
+  normalizeAuthIndex,
+} from '@/utils/usage';
 import type { UsagePayload } from './hooks/useUsageData';
 import styles from '@/pages/UsagePage.module.scss';
 
@@ -88,6 +93,7 @@ export function CredentialStatsCard({
     if (!usage) return [];
 
     const rowMap = new Map<string, CredentialRow>();
+    const apiDisplayMetadata = collectUsageApiDisplayMetadata(usage);
 
     collectUsageDetails(usage).forEach((detail) => {
       const sourceInfo = resolveSourceDisplay(
@@ -96,12 +102,16 @@ export function CredentialStatsCard({
         sourceInfoMap,
         authFileMap
       );
-      const key = sourceInfo.identityKey ?? sourceInfo.displayName;
+      const metadata = detail.__apiName ? apiDisplayMetadata[detail.__apiName] : undefined;
+      const metadataLabel = metadata?.display_name || metadata?.alias || metadata?.name || metadata?.masked_key;
+      const displayName = metadataLabel ? `${metadataLabel} · ${sourceInfo.displayName}` : sourceInfo.displayName;
+      const sourceKey = sourceInfo.identityKey ?? sourceInfo.displayName;
+      const key = metadata && detail.__apiName ? `${sourceKey}:api:${detail.__apiName}` : sourceKey;
       const row =
         rowMap.get(key) ??
         ({
           key,
-          displayName: sourceInfo.displayName,
+          displayName,
           type: sourceInfo.type,
           success: 0,
           failure: 0,

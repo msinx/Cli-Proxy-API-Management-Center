@@ -9,7 +9,7 @@ import type {
   AmpcodeModelMapping,
   AmpcodeUpstreamApiKeyMapping
 } from '@/types';
-import type { Config } from '@/types/config';
+import type { Config, TopLevelApiKeyEntry } from '@/types/config';
 import { buildHeaderObject } from '@/utils/headers';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -98,6 +98,30 @@ const normalizeAuthIndex = (value: unknown): string | undefined => {
   if (value === undefined || value === null) return undefined;
   const trimmed = String(value).trim();
   return trimmed ? trimmed : undefined;
+};
+
+const normalizeTopLevelApiKeyEntry = (entry: unknown): TopLevelApiKeyEntry | null => {
+  if (entry === undefined || entry === null) return null;
+  const record = isRecord(entry) ? entry : null;
+  const apiKey =
+    record?.['api-key'] ??
+    record?.apiKey ??
+    record?.api_key ??
+    record?.apikey ??
+    record?.key ??
+    record?.Key ??
+    (typeof entry === 'string' ? entry : '');
+  const trimmed = String(apiKey || '').trim();
+  if (!trimmed) return null;
+
+  const result: TopLevelApiKeyEntry = { apiKey: trimmed };
+  const alias = record?.alias;
+  const name = record?.name;
+  const comment = record?.comment ?? record?.note;
+  if (alias !== undefined && String(alias).trim()) result.alias = String(alias).trim();
+  if (name !== undefined && String(name).trim()) result.name = String(name).trim();
+  if (comment !== undefined && String(comment).trim()) result.comment = String(comment).trim();
+  return result;
 };
 
 const normalizeApiKeyEntry = (entry: unknown): ApiKeyEntry | null => {
@@ -423,7 +447,11 @@ export const normalizeConfigResponse = (raw: unknown): Config => {
   }
   const apiKeysRaw = raw['api-keys'] ?? raw.apiKeys;
   if (Array.isArray(apiKeysRaw)) {
-    config.apiKeys = apiKeysRaw.map((key) => String(key)).filter((key) => key.trim() !== '');
+    const apiKeyEntries = apiKeysRaw
+      .map((entry) => normalizeTopLevelApiKeyEntry(entry))
+      .filter(Boolean) as TopLevelApiKeyEntry[];
+    config.apiKeyEntries = apiKeyEntries;
+    config.apiKeys = apiKeyEntries.map((entry) => entry.apiKey);
   }
 
   const geminiList = raw['gemini-api-key'] ?? raw.geminiApiKey ?? raw.geminiApiKeys;

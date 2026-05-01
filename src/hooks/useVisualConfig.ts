@@ -5,63 +5,88 @@ import type {
   PayloadParamEntry,
   PayloadParamValueType,
   PayloadRule,
+  VisualApiKeyEntry,
   VisualConfigValues,
   VisualConfigValidationErrors,
   PayloadParamValidationErrorCode,
 } from '@/types/visualConfig';
-import { DEFAULT_VISUAL_VALUES } from '@/types/visualConfig';
+import { DEFAULT_VISUAL_VALUES, makeClientId } from '@/types/visualConfig';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
 }
 
-function extractApiKeyValue(raw: unknown): string | null {
-  if (typeof raw === 'string') {
-    const trimmed = raw.trim();
-    return trimmed ? trimmed : null;
-  }
+function parseApiKeyEntries(raw: unknown): VisualApiKeyEntry[] {
+  if (!Array.isArray(raw)) return [];
 
-  const record = asRecord(raw);
-  if (!record) return null;
+  return raw
+    .map((item) => {
+      if (typeof item === 'string') {
+        const apiKey = item.trim();
+        return apiKey ? { id: makeClientId(), apiKey, alias: '', name: '', comment: '' } : null;
+      }
 
-  const candidates = [record['api-key'], record.apiKey, record.key, record.Key];
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string') {
-      const trimmed = candidate.trim();
-      if (trimmed) return trimmed;
-    }
-  }
+      const record = asRecord(item);
+      if (!record) return null;
 
-  return null;
+      const apiKey = String(
+        record['api-key'] ?? record.apiKey ?? record.api_key ?? record.apikey ?? record.key ?? record.Key ?? ''
+      ).trim();
+      if (!apiKey) return null;
+
+      return {
+        id: makeClientId(),
+        apiKey,
+        alias: String(record.alias ?? '').trim(),
+        name: String(record.name ?? '').trim(),
+        comment: String(record.comment ?? record.note ?? '').trim(),
+      };
+    })
+    .filter(Boolean) as VisualApiKeyEntry[];
 }
 
-function parseApiKeysText(raw: unknown): string {
-  if (!Array.isArray(raw)) return '';
-
-  const keys: string[] = [];
-  for (const item of raw) {
-    const key = extractApiKeyValue(item);
-    if (key) keys.push(key);
-  }
-  return keys.join('\n');
+function serializeApiKeyEntries(entries: VisualApiKeyEntry[]): Array<string | Record<string, string>> {
+  return entries
+    .map((entry) => ({
+      apiKey: entry.apiKey.trim(),
+      alias: entry.alias.trim(),
+      name: entry.name.trim(),
+      comment: entry.comment.trim(),
+    }))
+    .filter((entry) => entry.apiKey)
+    .map((entry) => {
+      if (!entry.alias && !entry.name && !entry.comment) return entry.apiKey;
+      return {
+        'api-key': entry.apiKey,
+        ...(entry.alias ? { alias: entry.alias } : {}),
+        ...(entry.name ? { name: entry.name } : {}),
+        ...(entry.comment ? { comment: entry.comment } : {}),
+      };
+    });
 }
 
-function resolveApiKeysText(parsed: Record<string, unknown>): string {
+function resolveApiKeyEntries(parsed: Record<string, unknown>): VisualApiKeyEntry[] {
   if (Object.prototype.hasOwnProperty.call(parsed, 'api-keys')) {
-    return parseApiKeysText(parsed['api-keys']);
+    return parseApiKeyEntries(parsed['api-keys']);
   }
 
   const auth = asRecord(parsed.auth);
   const providers = asRecord(auth?.providers);
   const configApiKeyProvider = asRecord(providers?.['config-api-key']);
-  if (!configApiKeyProvider) return '';
+  if (!configApiKeyProvider) return [];
 
   if (Object.prototype.hasOwnProperty.call(configApiKeyProvider, 'api-key-entries')) {
-    return parseApiKeysText(configApiKeyProvider['api-key-entries']);
+    return parseApiKeyEntries(configApiKeyProvider['api-key-entries']);
   }
 
-  return parseApiKeysText(configApiKeyProvider['api-keys']);
+  return parseApiKeyEntries(configApiKeyProvider['api-keys']);
+}
+
+function resolveApiKeysText(parsed: Record<string, unknown>): string {
+  return resolveApiKeyEntries(parsed)
+    .map((entry) => entry.apiKey)
+    .join('\n');
 }
 
 type YamlDocument = ReturnType<typeof parseDocument>;
@@ -599,6 +624,21 @@ function getNextDirtyFields(
   if (Object.prototype.hasOwnProperty.call(patch, 'apiKeysText')) {
     updateDirty('apiKeysText', nextValues.apiKeysText === baselineValues.apiKeysText);
   }
+  if (Object.prototype.hasOwnProperty.call(patch, 'apiKeyEntries')) {
+    const sameEntries =
+      nextValues.apiKeyEntries.length === baselineValues.apiKeyEntries.length &&
+      nextValues.apiKeyEntries.every((entry, index) => {
+        const baseline = baselineValues.apiKeyEntries[index];
+        return (
+          baseline &&
+          entry.apiKey === baseline.apiKey &&
+          entry.alias === baseline.alias &&
+          entry.name === baseline.name &&
+          entry.comment === baseline.comment
+        );
+      });
+    updateDirty('apiKeyEntries', sameEntries);
+  }
   if (Object.prototype.hasOwnProperty.call(patch, 'debug')) {
     updateDirty('debug', nextValues.debug === baselineValues.debug);
   }
@@ -841,6 +881,7 @@ export function useVisualConfig() {
 
         authDir: typeof parsed['auth-dir'] === 'string' ? parsed['auth-dir'] : '',
         apiKeysText: resolveApiKeysText(parsed),
+        apiKeyEntries: resolveApiKeyEntries(parsed),
 
         debug: Boolean(parsed.debug),
         commercialMode: Boolean(parsed['commercial-mode']),
@@ -945,12 +986,9 @@ export function useVisualConfig() {
         }
 
         setStringInDoc(doc, ['auth-dir'], values.authDir);
-        const apiKeys = values.apiKeysText
-          .split('\n')
-          .map((key) => key.trim())
-          .filter(Boolean);
-        if (apiKeys.length > 0) {
-          doc.setIn(['api-keys'], apiKeys);
+        const apiKeyEntries = serializeApiKeyEntries(values.apiKeyEntries);
+        if (apiKeyEntries.length > 0) {
+          doc.setIn(['api-keys'], apiKeyEntries);
         } else if (docHas(doc, ['api-keys'])) {
           doc.deleteIn(['api-keys']);
         }

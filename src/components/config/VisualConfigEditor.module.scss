@@ -851,6 +851,13 @@
   }
 }
 
+.apiKeyMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
 @media (max-width: 900px) {
   .payloadRuleModelRow,
   .payloadRuleModelRowProtocolFirst,
@@ -862,6 +869,10 @@
   .apiKeyModalInputRow {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .apiKeyMetaGrid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .payloadRowActionButton {

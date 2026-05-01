@@ -222,8 +222,12 @@ export function VisualConfigEditor({
     validationErrors?.['streaming.nonstreamKeepaliveInterval']
   );
 
-  const handleApiKeysTextChange = useCallback(
-    (apiKeysText: string) => onChange({ apiKeysText }),
+  const handleApiKeyEntriesChange = useCallback(
+    (apiKeyEntries: VisualConfigValues['apiKeyEntries']) =>
+      onChange({
+        apiKeyEntries,
+        apiKeysText: apiKeyEntries.map((entry) => entry.apiKey).join('\n'),
+      }),
     [onChange]
   );
   const handlePayloadDefaultRulesChange = useCallback(
@@ -748,9 +752,9 @@ export function VisualConfigEditor({
               />
               <div className={styles.subsection}>
                 <ApiKeysCardEditor
-                  value={values.apiKeysText}
+                  entries={values.apiKeyEntries}
                   disabled={disabled}
-                  onChange={handleApiKeysTextChange}
+                  onChange={handleApiKeyEntriesChange}
                 />
               </div>
             </SectionStack>

@@ -12,6 +12,13 @@ export interface QuotaExceededConfig {
   antigravityCredits?: boolean;
 }
 
+export type TopLevelApiKeyEntry = {
+  apiKey: string;
+  alias?: string;
+  name?: string;
+  comment?: string;
+};
+
 export interface Config {
   debug?: boolean;
   proxyUrl?: string;
@@ -25,6 +32,7 @@ export interface Config {
   forceModelPrefix?: boolean;
   routingStrategy?: string;
   apiKeys?: string[];
+  apiKeyEntries?: TopLevelApiKeyEntry[];
   ampcode?: AmpcodeConfig;
   geminiApiKeys?: GeminiKeyConfig[];
   codexApiKeys?: ProviderKeyConfig[];

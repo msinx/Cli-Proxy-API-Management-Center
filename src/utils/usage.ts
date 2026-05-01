@@ -75,8 +75,17 @@ export interface UsageDetail {
   };
   thinking?: UsageThinking | null;
   failed: boolean;
+  __apiName?: string;
   __modelName?: string;
   __timestampMs?: number;
+}
+
+export interface UsageApiDisplayMetadata {
+  display_name?: string;
+  masked_key?: string;
+  alias?: string;
+  name?: string;
+  comment?: string;
 }
 
 export interface UsageDetailWithEndpoint extends UsageDetail {
@@ -129,6 +138,36 @@ const getApisRecord = (usageData: unknown): Record<string, unknown> | null => {
   const apisRaw = usageRecord ? usageRecord.apis : null;
   return isRecord(apisRaw) ? apisRaw : null;
 };
+
+export function collectUsageApiDisplayMetadata(
+  usageData: unknown
+): Record<string, UsageApiDisplayMetadata> {
+  const apis = getApisRecord(usageData);
+  if (!apis) return {};
+
+  const result: Record<string, UsageApiDisplayMetadata> = {};
+  Object.entries(apis).forEach(([apiName, apiEntry]) => {
+    if (!isRecord(apiEntry)) return;
+
+    const displayName = typeof apiEntry.display_name === 'string' ? apiEntry.display_name.trim() : '';
+    const maskedKey = typeof apiEntry.masked_key === 'string' ? apiEntry.masked_key.trim() : '';
+    const alias = typeof apiEntry.alias === 'string' ? apiEntry.alias.trim() : '';
+    const name = typeof apiEntry.name === 'string' ? apiEntry.name.trim() : '';
+    const comment = typeof apiEntry.comment === 'string' ? apiEntry.comment.trim() : '';
+
+    if (!displayName && !maskedKey && !alias && !name && !comment) return;
+
+    result[apiName] = {
+      ...(displayName ? { display_name: displayName } : {}),
+      ...(maskedKey ? { masked_key: maskedKey } : {}),
+      ...(alias ? { alias } : {}),
+      ...(name ? { name } : {}),
+      ...(comment ? { comment } : {}),
+    };
+  });
+
+  return result;
+}
 
 const normalizeUsageThinking = (value: unknown): UsageThinking | null => {
   if (!isRecord(value)) {
@@ -562,7 +601,7 @@ export function collectUsageDetails(usageData: unknown): UsageDetail[] {
     return normalized;
   };
 
-  Object.values(apis).forEach((apiEntry) => {
+  Object.entries(apis).forEach(([apiName, apiEntry]) => {
     if (!isRecord(apiEntry)) return;
     const modelsRaw = apiEntry.models;
     const models = isRecord(modelsRaw) ? modelsRaw : null;
@@ -590,6 +629,7 @@ export function collectUsageDetails(usageData: unknown): UsageDetail[] {
           tokens: tokensRaw as unknown as UsageDetail['tokens'],
           thinking: normalizeUsageThinking(detailRaw.thinking),
           failed: detailRaw.failed === true,
+          __apiName: apiName,
           __modelName: modelName,
           __timestampMs: Number.isNaN(timestampMs) ? 0 : timestampMs,
         });

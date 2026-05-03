@@ -1,0 +1,311 @@
+@use '../styles/variables.scss' as *;
+
+.usagePage {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: $spacing-xl;
+  padding: $spacing-xl;
+  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  border-radius: $radius-lg;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary-color) 8%, transparent), transparent 40%),
+    var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop-filter);
+  -webkit-backdrop-filter: var(--glass-backdrop-filter);
+
+  h1 {
+    margin: $spacing-xs 0;
+    font-size: 36px;
+    line-height: 1.1;
+    letter-spacing: 0;
+    color: var(--text-primary);
+  }
+
+  p {
+    max-width: 620px;
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--primary-color);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  gap: $spacing-md;
+  padding: $spacing-lg;
+
+  @media (max-width: $breakpoint-tablet) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: $breakpoint-mobile) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.errorBox {
+  padding: $spacing-md $spacing-lg;
+  border: 1px solid color-mix(in srgb, var(--error-color) 45%, transparent);
+  border-radius: $radius-md;
+  background: color-mix(in srgb, var(--error-color) 10%, transparent);
+  color: var(--error-color);
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $spacing-lg;
+
+  @media (max-width: $breakpoint-tablet) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: $breakpoint-mobile) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  min-height: 132px;
+  padding: $spacing-lg;
+
+  svg {
+    color: var(--primary-color);
+  }
+
+  span {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  strong {
+    color: var(--text-primary);
+    font-size: 30px;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  small {
+    color: var(--text-tertiary);
+    font-size: 12px;
+  }
+}
+
+.chartCard {
+  padding-bottom: $spacing-md;
+}
+
+.cardHint {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chartWrap {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  min-height: 220px;
+}
+
+.chartAxis {
+  stroke: var(--border-color);
+  stroke-width: 1;
+}
+
+.requestBar {
+  fill: color-mix(in srgb, var(--primary-color) 58%, transparent);
+}
+
+.tokenLine {
+  fill: none;
+  stroke: var(--success-color);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chartTick {
+  fill: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.chartLegend {
+  display: flex;
+  gap: $spacing-md;
+  color: var(--text-secondary);
+  font-size: 12px;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.legendBar,
+.legendLine {
+  display: inline-block;
+  width: 18px;
+  height: 6px;
+  border-radius: $radius-full;
+}
+
+.legendBar {
+  background: color-mix(in srgb, var(--primary-color) 58%, transparent);
+}
+
+.legendLine {
+  height: 3px;
+  background: var(--success-color);
+}
+
+.chartEmpty {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  color: var(--text-tertiary);
+}
+
+.twoColumn {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-lg;
+
+  @media (max-width: $breakpoint-tablet) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+    vertical-align: middle;
+    color: var(--text-secondary);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  th {
+    color: var(--text-tertiary);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  tr:last-child td {
+    border-bottom: 0;
+  }
+}
+
+.primaryCell {
+  color: var(--text-primary) !important;
+  font-weight: 650;
+}
+
+.emptyCell {
+  color: var(--text-tertiary) !important;
+  text-align: center !important;
+}
+
+.identityCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  span {
+    color: var(--text-primary);
+    font-weight: 650;
+  }
+
+  small {
+    color: var(--text-tertiary);
+    font-size: 11px;
+  }
+}
+
+.dangerText {
+  color: var(--error-color) !important;
+  font-weight: 700;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  min-width: 72px;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: $radius-full;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ok {
+  background: color-mix(in srgb, var(--success-color) 12%, transparent);
+  color: var(--success-color);
+}
+
+.failed {
+  background: color-mix(in srgb, var(--error-color) 12%, transparent);
+  color: var(--error-color);
+}
+
+.pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}

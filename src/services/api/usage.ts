@@ -30,6 +30,8 @@ export interface UsageSummary {
   average_latency_ms: number;
   rpm: number;
   tpm: number;
+  total_cost?: number;
+  cost_available?: boolean;
 }
 
 export interface UsageBreakdownRow {
@@ -45,6 +47,8 @@ export interface UsageBreakdownRow {
   reasoning_tokens: number;
   cached_tokens: number;
   average_latency_ms: number;
+  total_cost?: number;
+  cost_available?: boolean;
 }
 
 export interface UsageTimeBucket {
@@ -57,6 +61,8 @@ export interface UsageTimeBucket {
   output_tokens: number;
   reasoning_tokens: number;
   cached_tokens: number;
+  total_cost?: number;
+  cost_available?: boolean;
 }
 
 export interface UsageOverview {
@@ -94,6 +100,8 @@ export interface UsageEvent {
   reasoning_tokens: number;
   cached_tokens: number;
   total_tokens: number;
+  estimated_cost?: number;
+  cost_available?: boolean;
   created_at: string;
 }
 
@@ -160,6 +168,8 @@ const emptySummary: UsageSummary = {
   average_latency_ms: 0,
   rpm: 0,
   tpm: 0,
+  total_cost: 0,
+  cost_available: false,
 };
 
 const buildParams = (params: UsageQueryParams = {}) => {

@@ -166,6 +166,7 @@
     "failed": "失败",
     "requests": "请求数",
     "tokens": "Tokens",
+    "cost": "成本",
     "success_rate": "成功率",
     "avg_latency": "平均延迟",
     "trend": "趋势",
@@ -189,7 +190,9 @@
     "toggle_saved": "用量采集设置已保存。",
     "success_failure_short": "{{success}} 成功 / {{failure}} 失败",
     "input_output_short": "{{input}} 输入 / {{output}} 输出",
-    "rpm_tpm_short": "{{rpm}} rpm / {{tpm}} tpm"
+    "rpm_tpm_short": "{{rpm}} rpm / {{tpm}} tpm",
+    "cost_estimated_short": "基于模型价格估算",
+    "cost_partial_short": "基于已定价模型的部分估算"
   },
   "basic_settings": {
     "title": "基础设置",

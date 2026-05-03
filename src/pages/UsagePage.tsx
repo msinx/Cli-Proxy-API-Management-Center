@@ -8,6 +8,7 @@ import { Select, type SelectOption } from '@/components/ui/Select';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
 import {
   IconChartLine,
+  IconDollarSign,
   IconRefreshCw,
   IconShield,
   IconTimer,
@@ -46,6 +47,8 @@ const emptySummary = {
   average_latency_ms: 0,
   rpm: 0,
   tpm: 0,
+  total_cost: 0,
+  cost_available: false,
 };
 
 const emptyOverview: UsageOverview = {
@@ -99,6 +102,23 @@ const formatLatency = (value: number | undefined) => {
   const latency = value ?? 0;
   if (latency >= 1000) return `${(latency / 1000).toFixed(2)}s`;
   return `${Math.round(latency)}ms`;
+};
+
+const formatCost = (value: number | undefined) => {
+  const cost = value ?? 0;
+  if (cost > 0 && cost < 0.01) return `$${cost.toFixed(4)}`;
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: cost >= 100 ? 0 : 2,
+    maximumFractionDigits: cost >= 100 ? 0 : 2,
+  }).format(cost);
+};
+
+const formatCostCell = (value: number | undefined, available?: boolean) => {
+  if (available) return formatCost(value);
+  if ((value ?? 0) > 0) return `~${formatCost(value)}`;
+  return '-';
 };
 
 const formatDateTime = (value: string) => {
@@ -215,7 +235,15 @@ function MiniUsageChart({ series }: { series: UsageTimeBucket[] }) {
   );
 }
 
-function BreakdownTable({ rows, label }: { rows: UsageBreakdownRow[]; label: string }) {
+function BreakdownTable({
+  rows,
+  label,
+  showCost,
+}: {
+  rows: UsageBreakdownRow[];
+  label: string;
+  showCost: boolean;
+}) {
   const { t } = useTranslation();
   return (
     <div className={styles.tableScroll}>
@@ -226,6 +254,7 @@ function BreakdownTable({ rows, label }: { rows: UsageBreakdownRow[]; label: str
             <th>{t('usage.requests', { defaultValue: 'Requests' })}</th>
             <th>{t('usage.success_rate', { defaultValue: 'Success' })}</th>
             <th>{t('usage.tokens', { defaultValue: 'Tokens' })}</th>
+            {showCost ? <th>{t('usage.cost', { defaultValue: 'Cost' })}</th> : null}
             <th>{t('usage.avg_latency', { defaultValue: 'Avg latency' })}</th>
           </tr>
         </thead>
@@ -236,12 +265,13 @@ function BreakdownTable({ rows, label }: { rows: UsageBreakdownRow[]; label: str
               <td>{formatCount(row.request_count)}</td>
               <td>{formatPercent(row.success_rate)}</td>
               <td>{formatCompact(row.total_tokens)}</td>
+              {showCost ? <td>{formatCostCell(row.total_cost, row.cost_available)}</td> : null}
               <td>{formatLatency(row.average_latency_ms)}</td>
             </tr>
           ))}
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={5} className={styles.emptyCell}>
+              <td colSpan={showCost ? 6 : 5} className={styles.emptyCell}>
                 {t('usage.no_rows', { defaultValue: 'No rows in this range.' })}
               </td>
             </tr>
@@ -298,7 +328,7 @@ function CredentialsTable({ rows }: { rows: UsageCredentialRow[] }) {
   );
 }
 
-function EventsTable({ events }: { events: UsageEvent[] }) {
+function EventsTable({ events, showCost }: { events: UsageEvent[]; showCost: boolean }) {
   const { t } = useTranslation();
   return (
     <div className={styles.tableScroll}>
@@ -311,6 +341,7 @@ function EventsTable({ events }: { events: UsageEvent[] }) {
             <th>{t('usage.source', { defaultValue: 'Source' })}</th>
             <th>{t('usage.status', { defaultValue: 'Status' })}</th>
             <th>{t('usage.tokens', { defaultValue: 'Tokens' })}</th>
+            {showCost ? <th>{t('usage.cost', { defaultValue: 'Cost' })}</th> : null}
             <th>{t('usage.latency', { defaultValue: 'Latency' })}</th>
           </tr>
         </thead>
@@ -329,12 +360,13 @@ function EventsTable({ events }: { events: UsageEvent[] }) {
                 </span>
               </td>
               <td>{formatCompact(event.total_tokens)}</td>
+              {showCost ? <td>{formatCostCell(event.estimated_cost, event.cost_available)}</td> : null}
               <td>{formatLatency(event.latency_ms)}</td>
             </tr>
           ))}
           {events.length === 0 ? (
             <tr>
-              <td colSpan={7} className={styles.emptyCell}>
+              <td colSpan={showCost ? 8 : 7} className={styles.emptyCell}>
                 {t('usage.no_events', { defaultValue: 'No request events in this range.' })}
               </td>
             </tr>
@@ -502,6 +534,12 @@ export function UsagePage() {
   const series = range === '1h' || range === '24h' ? overview.hourly_series : overview.daily_series;
   const summary = overview.summary || emptySummary;
   const hasUsage = summary.request_count > 0;
+  const showSummaryCost = Boolean(summary.cost_available || (summary.total_cost ?? 0) > 0);
+  const showModelCost = models.some((row) => row.cost_available || (row.total_cost ?? 0) > 0);
+  const showProviderCost = providers.some((row) => row.cost_available || (row.total_cost ?? 0) > 0);
+  const showEventCost = eventsPage.events.some(
+    (event) => event.cost_available || (event.estimated_cost ?? 0) > 0
+  );
   const disableControls = connectionStatus !== 'connected' || loading;
   const totalPages = Math.max(eventsPage.total_pages || 0, 1);
 
@@ -664,10 +702,26 @@ export function UsagePage() {
           </small>
         </Card>
         <Card className={styles.statCard}>
-          <IconTimer size={20} />
-          <span>{t('usage.avg_latency', { defaultValue: 'Avg latency' })}</span>
-          <strong>{loading ? '-' : formatLatency(summary.average_latency_ms)}</strong>
-          <small>{overview.timezone || '-'}</small>
+          {showSummaryCost ? <IconDollarSign size={20} /> : <IconTimer size={20} />}
+          <span>
+            {showSummaryCost
+              ? t('usage.cost', { defaultValue: 'Cost' })
+              : t('usage.avg_latency', { defaultValue: 'Avg latency' })}
+          </span>
+          <strong>
+            {loading
+              ? '-'
+              : showSummaryCost
+                ? formatCostCell(summary.total_cost, summary.cost_available)
+                : formatLatency(summary.average_latency_ms)}
+          </strong>
+          <small>
+            {showSummaryCost
+              ? summary.cost_available
+                ? t('usage.cost_estimated_short', { defaultValue: 'Estimated from model prices' })
+                : t('usage.cost_partial_short', { defaultValue: 'Partial estimate from priced models' })
+              : overview.timezone || '-'}
+          </small>
         </Card>
       </section>
 
@@ -690,10 +744,18 @@ export function UsagePage() {
 
       <section className={styles.twoColumn}>
         <Card title={t('usage.models', { defaultValue: 'Models' })}>
-          <BreakdownTable rows={models} label={t('usage.model', { defaultValue: 'Model' })} />
+          <BreakdownTable
+            rows={models}
+            label={t('usage.model', { defaultValue: 'Model' })}
+            showCost={showModelCost}
+          />
         </Card>
         <Card title={t('usage.providers', { defaultValue: 'Providers' })}>
-          <BreakdownTable rows={providers} label={t('usage.provider', { defaultValue: 'Provider' })} />
+          <BreakdownTable
+            rows={providers}
+            label={t('usage.provider', { defaultValue: 'Provider' })}
+            showCost={showProviderCost}
+          />
         </Card>
       </section>
 
@@ -727,7 +789,7 @@ export function UsagePage() {
           </div>
         }
       >
-        <EventsTable events={eventsPage.events} />
+        <EventsTable events={eventsPage.events} showCost={showEventCost} />
       </Card>
     </div>
   );

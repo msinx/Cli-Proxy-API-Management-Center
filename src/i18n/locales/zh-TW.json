@@ -166,6 +166,7 @@
     "failed": "失敗",
     "requests": "請求數",
     "tokens": "Tokens",
+    "cost": "成本",
     "success_rate": "成功率",
     "avg_latency": "平均延遲",
     "trend": "趨勢",
@@ -189,7 +190,9 @@
     "toggle_saved": "用量採集設定已儲存。",
     "success_failure_short": "{{success}} 成功 / {{failure}} 失敗",
     "input_output_short": "{{input}} 輸入 / {{output}} 輸出",
-    "rpm_tpm_short": "{{rpm}} rpm / {{tpm}} tpm"
+    "rpm_tpm_short": "{{rpm}} rpm / {{tpm}} tpm",
+    "cost_estimated_short": "基於模型價格估算",
+    "cost_partial_short": "基於已定價模型的部分估算"
   },
   "basic_settings": {
     "title": "基本設定",

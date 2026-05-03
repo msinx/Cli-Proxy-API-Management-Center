@@ -166,6 +166,7 @@
     "failed": "Failed",
     "requests": "Requests",
     "tokens": "Tokens",
+    "cost": "Cost",
     "success_rate": "Success rate",
     "avg_latency": "Avg latency",
     "trend": "Trend",
@@ -189,7 +190,9 @@
     "toggle_saved": "Usage collection setting saved.",
     "success_failure_short": "{{success}} ok / {{failure}} failed",
     "input_output_short": "{{input}} in / {{output}} out",
-    "rpm_tpm_short": "{{rpm}} rpm / {{tpm}} tpm"
+    "rpm_tpm_short": "{{rpm}} rpm / {{tpm}} tpm",
+    "cost_estimated_short": "Estimated from model prices",
+    "cost_partial_short": "Partial estimate from priced models"
   },
   "basic_settings": {
     "title": "Основные настройки",

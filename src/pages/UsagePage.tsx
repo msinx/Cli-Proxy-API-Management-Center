@@ -269,7 +269,7 @@ function CredentialsTable({ rows }: { rows: UsageCredentialRow[] }) {
         </thead>
         <tbody>
           {rows.slice(0, 12).map((row) => (
-            <tr key={`${row.source_hash}-${row.auth_index}-${row.auth_id_hash}-${row.auth_type}`}>
+            <tr key={`${row.provider || ''}-${row.source_hash}-${row.auth_index}-${row.auth_id_hash}-${row.auth_type}`}>
               <td>
                 <div className={styles.identityCell}>
                   <span>{row.source_display || row.source_hash || '-'}</span>

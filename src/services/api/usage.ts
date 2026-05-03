@@ -80,6 +80,8 @@ export interface UsageEvent {
   endpoint: string;
   api_group_key: string;
   source_display: string;
+  source_type?: string;
+  source_key?: string;
   source_hash: string;
   auth_index: string;
   auth_id_hash: string;
@@ -98,6 +100,8 @@ export interface UsageEvent {
 export interface SourceOption {
   display: string;
   hash: string;
+  source_type?: string;
+  source_key?: string;
 }
 
 export interface UsageEventsPage {
@@ -112,7 +116,10 @@ export interface UsageEventsPage {
 }
 
 export interface UsageCredentialRow {
+  provider?: string;
   source_display: string;
+  source_type?: string;
+  source_key?: string;
   source_hash: string;
   auth_index: string;
   auth_id_hash: string;
